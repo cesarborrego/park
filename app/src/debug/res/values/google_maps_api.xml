@@ -1,0 +1,21 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=AD:1A:F8:5B:26:CA:68:07:44:39:6F:AB:E7:8B:BE:33:86:0B:4D:B7%3Bcom.neology.parking_neo
+
+    You can also add your credentials to an existing key, using this line:
+    AD:1A:F8:5B:26:CA:68:07:44:39:6F:AB:E7:8B:BE:33:86:0B:4D:B7;com.neology.parking_neo
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
+        AIzaSyCTkXiroWLBlj29UvQRsSgTiUG7ltcLLXE
+    </string>
+</resources>

@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Parking_Neo</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="no_location_data_provided">no location data provider</string>
+    <string name="service_not_available">servicio no disponible</string>
+    <string name="invalid_lat_long_used">lato lon usados invalidos</string>
+    <string name="no_address_found">no se encuentra direccion</string>
+    <string name="address_found">direccion encontrada</string>
+    <string name="no_geocoder_available">geocoder no disponble</string>
+    <string name="fetch_address">fetch address</string>
+    <string name="title_activity_main2">Main2Activity</string>
+    <string name="rfid_001">RFID-001</string>
+    <string name="entidad">ENTIDAD</string>
+    <string name="tipo_de_servicio">TIPO DE SERVICIO</string>
+    <string name="auto_particular">AUTO PARTICULAR</string>
+    <string name="fecha_de_registro">FECHA DE REGISTRO</string>
+    <string name="fecha_de_vencimiento">FECHA DE VENCIMIENTO</string>
+    <string name="_02_05_2015">02/05/2015</string>
+    <string name="_02_05_2018">02/05/2018</string>
+    <string name="saldo_actual">SALDO ACTUAL</string>
+    <string name="_100_00">$100.00</string>
+
+
+</resources>
