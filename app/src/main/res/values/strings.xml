@@ -19,6 +19,9 @@
     <string name="_02_05_2018">02/05/2018</string>
     <string name="saldo_actual">SALDO ACTUAL</string>
     <string name="_100_00">$100.00</string>
+    <string name="pick_time">tiempo</string>
+    <string name="datepicker">date picker</string>
+    <string name="timepicker">time picker</string>
 
 
 </resources>
