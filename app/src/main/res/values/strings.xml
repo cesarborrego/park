@@ -27,6 +27,8 @@
 
     <string name="api_key_billing">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAi7F9ryvge9tR+U3iBYu7DVsLS3nZ7vfbPc9vFyq5ZXkFO5TnHGj/HCj7c1kSPd8hCspUJmGLTf9oCZfp75iWeSRgptEutySaoAs+JOMQ586adBTWFEt7ax1WR8J9Hikktp/rTIzVKSP05hppCrvEQkmDUrzwFVywZr8AvNB1ABYf1XQ+rBYIj038ndp+zDR9PJ2rKxArqTJx7lYjYHx+rvpkIQP3wseHqtQpqU4YwBvs1d4f8CyOuJo7qjOWFvtLZyb6M+61I5yLtSoNV2FW1XG+HzDUJgc2dBMHqVeRhLFH//HlipD0kfmoTYsur4c9KOE6tLB+I8L0s2gn1fZ7jwIDAQAB</string>
     <string name="comprar">COMPRAR</string>
+    <string name="recargar">RECARGAR</string>
+    <string name="cantidad_recargar">"RECARGAR POR $"</string>
 
 
 </resources>

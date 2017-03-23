@@ -11,6 +11,7 @@ import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -20,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +40,7 @@ import com.neology.parking_neo.BottomSheetDataNFC;
 import com.neology.parking_neo.Main2Activity;
 import com.neology.parking_neo.R;
 import com.neology.parking_neo.Services.FetchAddressIntentService;
+import com.neology.parking_neo.dialogs.PreciosPicker;
 import com.neology.parking_neo.utils.Constants;
 
 /**
@@ -144,6 +147,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         mBottomSheetBehavior.setPeekHeight(190);
         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        initElements(v);
+    }
+
+    private void initElements(View v) {
+        RelativeLayout recargarBtnId = (RelativeLayout) v.findViewById(R.id.recargarBtnID);
+        recargarBtnId.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showDialog();
+            }
+        });
+    }
+
+    void showDialog() {
+        // Create the fragment and show it as a dialog.
+        DialogFragment newFragment = PreciosPicker.newInstance();
+        newFragment.show(getFragmentManager(), "dialog");
+    }
+
+    public void recargarDemo(View v){
+        Log.d("BOTTOM" ,"presionado");
     }
 
     @Override

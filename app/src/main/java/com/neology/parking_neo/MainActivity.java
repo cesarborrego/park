@@ -44,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.icon_pago
     };
     private IabHelper mHelper;
-    FloatingActionButton pagarDemo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +62,6 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
         setupTabIcon();
 
-        pagarDemo = (FloatingActionButton) findViewById(R.id.pruebaCompraID);
-        pagarDemo.setOnClickListener(comprarListener);
         connectGooglePlay();
     }
 
@@ -134,14 +131,13 @@ public class MainActivity extends AppCompatActivity {
                 return;
             } else if (purchase.getSku().equals(SKU)) {
                 consumeItem();
-                pagarDemo.setEnabled(false);
             }
 
         }
     };
 
     private void consultaItemnsDisponibles() {
-        List<String> additionalSkuList = new ArrayList<String>();
+        ArrayList<String> additionalSkuList = new ArrayList<String>();
         additionalSkuList.add(SKU_10);
         additionalSkuList.add(SKU_20);
         additionalSkuList.add(SKU_30);
@@ -206,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
                                               IabResult result) {
 
                     if (result.isSuccess()) {
-                        pagarDemo.setEnabled(true);
+                        //LANZAR EL SERVICIO PARA ACTUALIZAR EL SALDO Y ACTUALIZAR LA UI CON EL SALDO
                     } else {
                         // handle error
                     }
