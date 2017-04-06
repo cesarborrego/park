@@ -156,7 +156,7 @@ public class PagoFragment extends Fragment
     View.OnClickListener comprarListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            ((MainActivity)getActivity()).openBilling();
+            ((MainActivity)getActivity()).openBilling(0);
         }
     };
 

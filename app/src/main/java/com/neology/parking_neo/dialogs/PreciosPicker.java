@@ -28,6 +28,7 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
     NumberPicker numberPicker;
     RelativeLayout recargarPickerID;
     TextView cantidad;
+    int iMonto;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,7 +57,7 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
     View.OnClickListener recargarListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            ((MainActivity)getActivity()).openBilling();
+            ((MainActivity)getActivity()).openBilling(iMonto);
             dismiss();
         }
     };
@@ -69,5 +70,6 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
 
     private void update(int i1) {
         cantidad.setText(getString(R.string.cantidad_recargar) + i1 + ".00");
+        iMonto = i1;
     }
 }
