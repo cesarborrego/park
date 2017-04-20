@@ -29,57 +29,6 @@
             android:id="@+id/lblTime"
             style="@style/DTP.Label"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/btnTimePicker"
-            android:layout_marginBottom="20dp"
-            android:orientation="horizontal"
-            android:background="@drawable/recargar">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="@string/activar_alarma"
-                android:textStyle="bold"
-                android:layout_marginBottom="@dimen/activity_vertical_margin"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
-                android:textColor="@android:color/white"
-                android:gravity="center"/>
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:src="@drawable/icon_alarm"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/comprarID"
-            android:orientation="horizontal"
-            android:background="@drawable/recargar">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="@string/comprar"
-                android:textStyle="bold"
-                android:layout_marginBottom="@dimen/activity_vertical_margin"
-                android:layout_marginTop="@dimen/activity_vertical_margin"
-                android:textColor="@android:color/white"
-                android:gravity="center"/>
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:src="@drawable/icon_alarm"/>
-
-        </LinearLayout>
-
     </LinearLayout>
 
 </FrameLayout>

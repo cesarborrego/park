@@ -48,18 +48,43 @@
                 </LinearLayout>
             </android.support.v7.widget.CardView>
 
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/pagarParquiID"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                app:backgroundTint="@color/recarga_up"
-                app:borderWidth="0dp"
-                app:elevation="6dp"
-                app:fabSize="normal"
-                android:clickable="true"
-                android:visibility="gone"
-                android:src="@drawable/icon_pago"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/pagarParquiID"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    app:backgroundTint="@color/recarga_up"
+                    app:borderWidth="0dp"
+                    app:elevation="6dp"
+                    app:fabSize="normal"
+                    android:clickable="true"
+                    android:visibility="gone"
+                    android:src="@drawable/icon_pago"/>
+
+                <RelativeLayout
+                    android:id="@+id/cajaContadorID"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:alpha="0.9"
+                    android:background="@android:color/darker_gray">
+                    <TextView
+                        android:id="@+id/contadorID"
+                        style="@style/textStyle"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </RelativeLayout>
+
+            </LinearLayout>
+
+
 
             <ProgressBar
                 android:id="@+id/progress_bar1"

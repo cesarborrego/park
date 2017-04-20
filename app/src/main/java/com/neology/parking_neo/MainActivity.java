@@ -1,9 +1,15 @@
 package com.neology.parking_neo;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -17,22 +23,22 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.neology.parking_neo.adapters.MovimientosAdapter;
+import com.neology.parking_neo.Services.AlarmReceiver;
+import com.neology.parking_neo.Services.TimerService;
 import com.neology.parking_neo.adapters.ViewPagerAdapter;
+import com.neology.parking_neo.dialogs.PreciosPicker;
 import com.neology.parking_neo.fragments.MapFragment;
 import com.neology.parking_neo.fragments.PagoFragment;
-import com.neology.parking_neo.model.Movimientos;
 import com.neology.parking_neo.util_vending.IabHelper;
 import com.neology.parking_neo.util_vending.IabResult;
 import com.neology.parking_neo.util_vending.Inventory;
 import com.neology.parking_neo.util_vending.Purchase;
 import com.neology.parking_neo.utils.Constants;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -53,11 +59,21 @@ public class MainActivity extends AppCompatActivity {
     int iMonto = 0;
     int montoActualizado = 0;
     int tipoMovimiento = 0;
+    private Calendar calendar;
+    private Intent my_intent;
+    private AlarmManager alarmManager;
+    private PendingIntent pendingIntent;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        calendar = Calendar.getInstance();
+        my_intent = new Intent(getApplicationContext(), AlarmReceiver.class);
+        alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+
         /*
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -70,11 +86,24 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
         setupTabIcon();
         getDataTarjeta();
+
+
     }
 
     private void setupTabIcon() {
         tabLayout.getTabAt(0).setIcon(tabIcons[0]);
         tabLayout.getTabAt(1).setIcon(tabIcons[1]);
+    }
+
+    public void launchAlarm(int minutos_alarma) {
+        calendar.set(Calendar.HOUR_OF_DAY, calendar.get(Calendar.HOUR_OF_DAY));
+        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + minutos_alarma);
+        my_intent.putExtra("extra", "alarm on");
+        pendingIntent = PendingIntent.getBroadcast(getApplicationContext(),
+                0,
+                my_intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);
     }
 
     private void setupViewPager(ViewPager viewPager) {
@@ -110,14 +139,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    View.OnClickListener comprarListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            consultaItemnsDisponibles();
-            //openBilling();
-        }
-    };
-
     public void openBilling(int iMonto, int tipoMovimiento) {
         this.iMonto = iMonto;
         this.tipoMovimiento = tipoMovimiento;
@@ -145,39 +166,6 @@ public class MainActivity extends AppCompatActivity {
                 consumeItem();
             }
 
-        }
-    };
-
-    private void consultaItemnsDisponibles() {
-        ArrayList<String> additionalSkuList = new ArrayList<String>();
-        additionalSkuList.add(Constants.SKU_10);
-        additionalSkuList.add(Constants.SKU_20);
-        additionalSkuList.add(Constants.SKU_30);
-        additionalSkuList.add(Constants.SKU_40);
-        additionalSkuList.add(Constants.SKU_50);
-        additionalSkuList.add(Constants.SKU_1_00);
-        try {
-            mHelper.queryInventoryAsync(true, null, additionalSkuList, mReceivedInventoryListenerDisponibles);
-        } catch (IabHelper.IabAsyncInProgressException e) {
-            e.printStackTrace();
-        }
-    }
-
-    IabHelper.QueryInventoryFinishedListener mReceivedInventoryListenerDisponibles
-            = new IabHelper.QueryInventoryFinishedListener() {
-        public void onQueryInventoryFinished(IabResult result,
-                                             Inventory inventory) {
-
-
-            if (result.isFailure()) {
-                // Handle failure
-            } else {
-                String applePrice =
-                        inventory.getSkuDetails(Constants.SKU_1_00).getPrice();
-                String bananaPrice =
-                        inventory.getSkuDetails(Constants.SKU_10).getPrice();
-                Log.d(TAG, "item disponible " + applePrice + bananaPrice);
-            }
         }
     };
 
@@ -248,7 +236,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d("RESPUESTA SERVICIO POST", response.toString());
-                        readJson(response);
+                        readJson(response, tipoMovimiento);
                     }
                 },
                 new Response.ErrorListener() {
@@ -267,14 +255,42 @@ public class MainActivity extends AppCompatActivity {
         VolleyApp.getmInstance().addToRequestQueue(jsonObjReq);
     }
 
-    private void readJson(JSONObject jsonObject) {
+    private void readJson(JSONObject jsonObject, int tipoMovimiento) {
         try {
             JSONObject jsonObject1 = jsonObject.getJSONObject("object");
             montoActualizado = jsonObject1.getInt("iSaldo");
             MapFragment.saldoTxt.setText("$" + montoActualizado + ".00");
+            if (tipoMovimiento == 2) {
+                //lanzar picker para alarma
+                showTimePicker(3);
+                startService(new Intent(getApplicationContext(), TimerService.class));
+                Log.i(TAG, "Started service");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    private BroadcastReceiver br = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateGUI(intent); // or whatever method used to update your GUI fields
+        }
+    };
+
+    private void updateGUI(Intent intent) {
+        if (intent.getExtras() != null) {
+            long millisUntilFinished = intent.getLongExtra("countdown", 0);
+            Log.i(TAG, "Countdown seconds remaining: " + millisUntilFinished / 1000);
+            MapFragment.contador.setText("Tiempo restante "+ millisUntilFinished / 1000);
+            MapFragment.cajaContador.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showTimePicker(int tipoMovimiento) {
+        // Create the fragment and show it as a dialog.
+        DialogFragment newFragment = PreciosPicker.newInstance(tipoMovimiento);
+        newFragment.show(getSupportFragmentManager(), "dialog");
     }
 
     public void getDataTarjeta() {
@@ -314,7 +330,8 @@ public class MainActivity extends AppCompatActivity {
 
     class readTarjetaJson extends AsyncTask<JSONObject, Void, Boolean> {
         boolean respuesta = false;
-        int saldoRegistrado= 0;
+        int saldoRegistrado = 0;
+
         @Override
         protected Boolean doInBackground(JSONObject... jsonObjects) {
             JSONObject jsonObject = jsonObjects[0];
@@ -342,14 +359,39 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
-            if(aBoolean) {
-                MapFragment.saldoTxt.setText("$"+saldoRegistrado+".00");
+            if (aBoolean) {
+                MapFragment.saldoTxt.setText("$" + saldoRegistrado + ".00");
             }
         }
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(br);
+        Log.i(TAG, "Unregistered broacast receiver");
+    }
+
+    @Override
+    public void onStop() {
+        try {
+            unregisterReceiver(br);
+        } catch (Exception e) {
+            // Receiver was probably already stopped in onPause()
+        }
+        super.onStop();
+    }
+
+    @Override
+    protected void onResume() {
+        registerReceiver(br, new IntentFilter(TimerService.COUNTDOWN_BR));
+        super.onResume();
+    }
+
+    @Override
     public void onDestroy() {
+        stopService(new Intent(this, TimerService.class));
+        Log.i(TAG, "Stopped service");
         super.onDestroy();
         if (mHelper != null) try {
             mHelper.dispose();

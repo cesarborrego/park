@@ -124,6 +124,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     BottomSheetBehavior mBottomSheetBehavior;
     View bottomSheet;
     public static TextView saldoTxt;
+    public static TextView contador;
+    public static RelativeLayout cajaContador;
 
     FloatingActionButton pargarParquiBtn;
 
@@ -148,6 +150,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.map_fragment, container, false);
         saldoTxt = (TextView) v.findViewById(R.id.saldoID);
+        contador = (TextView) v.findViewById(R.id.contadorID);
+        cajaContador = (RelativeLayout) v.findViewById(R.id.cajaContadorID);
+        cajaContador.setVisibility(View.GONE);
         mLocationAddressTextView = (TextView) v.findViewById(R.id.location_address_view1);
         mProgressBar = (ProgressBar) v.findViewById(R.id.progress_bar1);
         mFetchAddressButton = (ImageView) v.findViewById(R.id.fetch_address_button1);

@@ -88,8 +88,8 @@ public class RingtonePlayingService extends Service {
         PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent_pagro_fragment, 0);
 
         Notification notification = new Notification.Builder(this)
-                .setContentTitle("ALARMA!")
-                .setContentText("Click me!")
+                .setContentTitle("PARQUIMETROS")
+                .setContentText("TU TIEMPO SE HA TERMINADO")
                 .setSmallIcon(R.drawable.logo)
                 .setContentIntent(pIntent)
                 .setAutoCancel(true)

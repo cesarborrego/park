@@ -12,4 +12,5 @@
     <dimen name="text_margin_top">72dp</dimen>
 
     <dimen name="card_margin">6dp</dimen>
+    <dimen name="space_text_card">10dp</dimen>
 </resources>
