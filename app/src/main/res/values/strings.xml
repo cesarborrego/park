@@ -29,6 +29,10 @@
     <string name="comprar">COMPRAR</string>
     <string name="recargar">RECARGAR</string>
     <string name="cantidad_recargar">"RECARGAR POR $"</string>
+    <string name="cantidad_comprar">"PAGAR PARQUÍMETRO POR $"</string>
+    <string name="parquimetro_1">PARQUIMETRO 1</string>
+    <string name="monto">30</string>
+    <string name="rfid_oo1">RFID-001</string>
 
 
 </resources>

@@ -11,6 +11,8 @@ import android.os.ResultReceiver;
 import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialogFragment;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -18,7 +20,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -37,7 +38,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.neology.parking_neo.BottomSheetDataNFC;
-import com.neology.parking_neo.Main2Activity;
+import com.neology.parking_neo.MainActivity;
 import com.neology.parking_neo.R;
 import com.neology.parking_neo.Services.FetchAddressIntentService;
 import com.neology.parking_neo.dialogs.PreciosPicker;
@@ -49,7 +50,10 @@ import com.neology.parking_neo.utils.Constants;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener{
+        GoogleApiClient.OnConnectionFailedListener {
+
+
+    private static final int LOCATION_PERMISSION_CODE = 123;
     private GoogleMap mMap;
 
     protected static final String TAG = "main-activity";
@@ -104,7 +108,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
     BottomSheetBehavior mBottomSheetBehavior;
     View bottomSheet;
+    public static TextView saldoTxt;
 
+    FloatingActionButton pargarParquiBtn;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -116,12 +122,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         mAddressOutput = "";
 
         buildGoogleApiClient();
+
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.map_fragment, container, false);
+        saldoTxt = (TextView) v.findViewById(R.id.saldoID);
         mLocationAddressTextView = (TextView) v.findViewById(R.id.location_address_view1);
         mProgressBar = (ProgressBar) v.findViewById(R.id.progress_bar1);
         mFetchAddressButton = (ImageView) v.findViewById(R.id.fetch_address_button1);
@@ -129,11 +137,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         setupBottomSheet(v);
         //showBottomSheet();
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map_fragment);
         mapFragment.getMapAsync(this);
         updateValuesFromBundle(savedInstanceState);
 
         updateUIWidgets();
+        initPagoParqui(v);
         return v;
     }
 
@@ -143,31 +152,48 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void setupBottomSheet(View v) {
-        bottomSheet = v.findViewById( R.id.bottom_sheet );
+        bottomSheet = v.findViewById(R.id.bottom_sheet);
         mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         mBottomSheetBehavior.setPeekHeight(190);
         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         initElements(v);
     }
 
-    private void initElements(View v) {
-        RelativeLayout recargarBtnId = (RelativeLayout) v.findViewById(R.id.recargarBtnID);
-        recargarBtnId.setOnClickListener(new View.OnClickListener() {
+    private void initPagoParqui(View view) {
+        pargarParquiBtn = (FloatingActionButton)view.findViewById(R.id.pagarParquiID);
+        pargarParquiBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showDialog();
+                showDialog(2);
             }
         });
     }
 
-    void showDialog() {
+    private void initElements(View v) {
+        RelativeLayout recargarBtnId = (RelativeLayout) v.findViewById(R.id.recargarBtnID);
+
+        recargarBtnId.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showDialog(1);
+            }
+        });
+    }
+
+    public void changeText(int saldoActual) {
+        //this textview should be bound in the fragment onCreate as a member variable
+        TextView frv = (TextView) getView().findViewById(R.id.saldoID);
+        frv.setText("raton" + saldoActual);
+    }
+
+    void showDialog(int tipoMovimiento) {
         // Create the fragment and show it as a dialog.
-        DialogFragment newFragment = PreciosPicker.newInstance();
+        DialogFragment newFragment = PreciosPicker.newInstance(tipoMovimiento);
         newFragment.show(getFragmentManager(), "dialog");
     }
 
-    public void recargarDemo(View v){
-        Log.d("BOTTOM" ,"presionado");
+    public void recargarDemo(View v) {
+        Log.d("BOTTOM", "presionado");
     }
 
     @Override
@@ -246,9 +272,44 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
      */
     @Override
     public void onConnected(Bundle connectionHint) {
+
+        if (canAccessLocation()) {
+            if (ContextCompat.checkSelfPermission(getContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+
+                // Gets the best and most recent location currently available, which may be null
+                // in rare cases when a location is not available.
+                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                if (mLastLocation != null) {
+                    // Determine whether a Geocoder is available.
+                    if (!Geocoder.isPresent()) {
+                        Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    // It is possible that the user presses the button to get the address before the
+                    // GoogleApiClient object successfully connects. In such a case, mAddressRequested
+                    // is set to true, but no attempt is made to fetch the address (see
+                    // fetchAddressButtonHandler()) . Instead, we start the intent service here if the
+                    // user has requested an address, since we now have a connection to GoogleApiClient.
+                    //if (mAddressRequested) {
+                    //  startIntentService();
+                    //}
+                    startIntentService();
+                }
+            }
+            return;
+        }
+
+        //If the app has not the permission then asking for the permission
+        requestLocationPermission();
+        
+        /*
+
         if (ContextCompat.checkSelfPermission(getContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
+
             // Gets the best and most recent location currently available, which may be null
             // in rare cases when a location is not available.
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -268,9 +329,76 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 //}
                 startIntentService();
             }
+        } */
+    }
+
+    //We are calling this method to check the permission status
+    private boolean canAccessLocation() {
+        //Getting the permission status
+        int permissionCheck = ContextCompat.checkSelfPermission(getContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION);
+
+        //If permission is granted returning true
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED){
+            // Gets the best and most recent location currently available, which may be null
+            // in rare cases when a location is not available.
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            return true;
         }
 
+        //If permission is not granted returning false
+        return false;
+    }
 
+    //Requesting permission
+    private void requestLocationPermission() {
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
+            //If the user has denied the permission previously your code will come to this block
+            //Here you can explain why you need this permission
+            //Explain here why you need this permission
+            Toast.makeText(getContext(), "Se necesita acceder a la ubicación para el uso correcto del mapa", Toast.LENGTH_SHORT).show();
+        }
+
+        //And finally ask for the permission
+        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
+    }
+
+    //This method will be called when the user will tap on allow or deny
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+
+        //Checking the request code of our request
+        if (requestCode == LOCATION_PERMISSION_CODE) {
+
+            //If permission is granted
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                //Displaying a toast
+                Toast.makeText(getContext(), "Permission granted now you can access location", Toast.LENGTH_LONG).show();
+
+                if (mLastLocation != null) {
+                    // Determine whether a Geocoder is available.
+                    if (!Geocoder.isPresent()) {
+                        Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    // It is possible that the user presses the button to get the address before the
+                    // GoogleApiClient object successfully connects. In such a case, mAddressRequested
+                    // is set to true, but no attempt is made to fetch the address (see
+                    // fetchAddressButtonHandler()) . Instead, we start the intent service here if the
+                    // user has requested an address, since we now have a connection to GoogleApiClient.
+                    //if (mAddressRequested) {
+                    //  startIntentService();
+                    //}
+                    startIntentService();
+                }
+
+            } else {
+                //Displaying another toast if permission is not granted
+                Toast.makeText(getContext(), "Oops you just denied the permission", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     /**
@@ -355,7 +483,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         }
 
         /**
-         *  Receives data sent from FetchAddressIntentService and updates the UI in MainActivity.
+         * Receives data sent from FetchAddressIntentService and updates the UI in MainActivity.
          */
         @Override
         protected void onReceiveResult(int resultCode, Bundle resultData) {
@@ -378,7 +506,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void configCamera() {
-        CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 17, 20, 40);
+        CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 16, 20, 40);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
         mMap.moveCamera(cameraUpdate);
         mMap.getUiSettings().setMapToolbarEnabled(true);

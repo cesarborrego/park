@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by LeviAcosta on 24/02/2017.
+ * Created by Cesar Segura on 24/02/2017.
  */
 
 public class ViewPagerAdapter extends FragmentPagerAdapter {
@@ -32,6 +32,11 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     public void addFragment(Fragment fragment, String title) {
         mFragmentList.add(fragment);
         mFragmentTitleList.add(title);
+    }
+
+    @Override
+    public int getItemPosition(Object object) {
+        return POSITION_NONE;
     }
 
     @Override

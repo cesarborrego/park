@@ -28,6 +28,7 @@ public class Constants {
     public static final String SKU_1_00 = "parki_1_00";
     public static final String ACTUALIZAR_TARJETA_URL = "http://mobile.neology-demos.com:8080/api/insertMovementParquimetro";
     public static final String DATOS_TARJETA_URL = "http://mobile.neology-demos.com:8080/api/parquimetros?strTarjetaID=";
+    public static final String MOVIMIENTOS_URL = "http://mobile.neology-demos.com:8080/api/movimientos?strTarjetaID=";
 
     //private static String SKU = "parki_40";
     public static String SKU = "android.test.purchased";

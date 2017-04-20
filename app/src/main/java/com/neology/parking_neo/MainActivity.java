@@ -1,5 +1,6 @@
 package com.neology.parking_neo;
 
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
@@ -8,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -15,6 +17,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.neology.parking_neo.adapters.ViewPagerAdapter;
 import com.neology.parking_neo.fragments.MapFragment;
 import com.neology.parking_neo.fragments.PagoFragment;
@@ -46,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private IabHelper mHelper;
 
     int iMonto = 0;
+    int montoActualizado = 0;
+    int tipoMovimiento = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +61,12 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         */
-
+        connectGooglePlay();
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        setupViewPager(viewPager);
-
         tabLayout = (TabLayout) findViewById(R.id.tabs);
+        setupViewPager(viewPager);
         tabLayout.setupWithViewPager(viewPager);
         setupTabIcon();
-
-        connectGooglePlay();
     }
 
     private void setupTabIcon() {
@@ -77,6 +79,9 @@ public class MainActivity extends AppCompatActivity {
         adapter.addFragment(new MapFragment(), "ONE");
         adapter.addFragment(new PagoFragment(), "TWO");
         viewPager.setAdapter(adapter);
+        /*
+        int index = viewPager.getCurrentItem();
+        android.support.v4.app.Fragment currentFragment = adapter.getItem(index);*/
     }
 
     private void connectGooglePlay() {
@@ -110,13 +115,14 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public void openBilling(int iMonto) {
+    public void openBilling(int iMonto, int tipoMovimiento) {
         this.iMonto = iMonto;
+        this.tipoMovimiento = tipoMovimiento;
         try {
             Random random = new Random();
             int requestCode = random.nextInt(65535);
-            if(requestCode<0) {
-                requestCode = requestCode*-1;
+            if (requestCode < 0) {
+                requestCode = requestCode * -1;
             }
             mHelper.launchPurchaseFlow(this, Constants.SKU, requestCode,
                     mPurchaseFinishedListener, "mypurchasetoken");
@@ -148,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         additionalSkuList.add(Constants.SKU_50);
         additionalSkuList.add(Constants.SKU_1_00);
         try {
-            mHelper.queryInventoryAsync  (true, null,  additionalSkuList, mReceivedInventoryListenerDisponibles);
+            mHelper.queryInventoryAsync(true, null, additionalSkuList, mReceivedInventoryListenerDisponibles);
         } catch (IabHelper.IabAsyncInProgressException e) {
             e.printStackTrace();
         }
@@ -167,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                         inventory.getSkuDetails(Constants.SKU_1_00).getPrice();
                 String bananaPrice =
                         inventory.getSkuDetails(Constants.SKU_10).getPrice();
-                Log.d(TAG, "item disponible " + applePrice+bananaPrice);
+                Log.d(TAG, "item disponible " + applePrice + bananaPrice);
             }
         }
     };
@@ -228,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
             js.put("strTarjetaID", "RFID-001");
             js.put("dFechaMovimiento", millis);
             js.put("iMonto", iMonto);
-            js.put("tipoMovimiento", 1);
+            js.put("tipoMovimiento", tipoMovimiento);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -239,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d("RESPUESTA SERVICIO POST", response.toString());
-
+                        readJson(response);
                     }
                 },
                 new Response.ErrorListener() {
@@ -247,8 +253,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onErrorResponse(VolleyError error) {
                         VolleyLog.d(null, "Error: " + error.getMessage());
                     }
-                })
-        {
+                }) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 HashMap<String, String> headers = new HashMap<String, String>();
@@ -256,8 +261,17 @@ public class MainActivity extends AppCompatActivity {
                 return headers;
             }
         };
-// Adding request to request queue
         VolleyApp.getmInstance().addToRequestQueue(jsonObjReq);
+    }
+
+    private void readJson(JSONObject jsonObject) {
+        try {
+            JSONObject jsonObject1 = jsonObject.getJSONObject("object");
+            montoActualizado = jsonObject1.getInt("iSaldo");
+            MapFragment.saldoTxt.setText("$"+montoActualizado+".00");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

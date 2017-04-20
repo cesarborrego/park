@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <fragment xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/map"
+    android:id="@+id/map_fragment"
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -47,6 +47,18 @@
                         android:src="@drawable/my_location" />
                 </LinearLayout>
             </android.support.v7.widget.CardView>
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/pagarParquiID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:backgroundTint="@color/recarga_up"
+                app:borderWidth="0dp"
+                app:elevation="6dp"
+                app:fabSize="normal"
+                android:clickable="true"
+                android:src="@drawable/icon_pago"/>
 
             <ProgressBar
                 android:id="@+id/progress_bar1"
@@ -255,6 +267,7 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/saldoID"
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
                             android:layout_marginBottom="@dimen/activity_vertical_margin"

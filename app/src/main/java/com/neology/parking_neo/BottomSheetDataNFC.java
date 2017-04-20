@@ -37,7 +37,7 @@ public class BottomSheetDataNFC extends BottomSheetDialogFragment {
 
     void showDialog() {
         // Create the fragment and show it as a dialog.
-        DialogFragment newFragment = PreciosPicker.newInstance();
+        DialogFragment newFragment = PreciosPicker.newInstance(1);
         newFragment.show(getFragmentManager(), "dialog");
     }
 }

@@ -20,9 +20,14 @@ import com.neology.parking_neo.R;
  */
 
 public class PreciosPicker extends DialogFragment implements NumberPicker.OnValueChangeListener{
+    int typeMsg;
 
-    public static PreciosPicker newInstance() {
-        return new PreciosPicker();
+    public static PreciosPicker newInstance(int typeMsg) {
+        PreciosPicker frag = new PreciosPicker();
+        Bundle args = new Bundle();
+        args.putInt("typeMsg", typeMsg);
+        frag.setArguments(args);
+        return frag;
     }
 
     NumberPicker numberPicker;
@@ -33,6 +38,7 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        typeMsg = getArguments().getInt("typeMsg");
     }
 
     @Nullable
@@ -57,7 +63,9 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
     View.OnClickListener recargarListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            ((MainActivity)getActivity()).openBilling(iMonto);
+            //typeMsg la reuso porque solo necesito saber si es 1 o 2
+            //la uso principalmente para mandar el tipo de mensaje al dialog pero tmb la mandare para el post
+            ((MainActivity)getActivity()).openBilling(iMonto, typeMsg);
             dismiss();
         }
     };
@@ -69,7 +77,17 @@ public class PreciosPicker extends DialogFragment implements NumberPicker.OnValu
     }
 
     private void update(int i1) {
-        cantidad.setText(getString(R.string.cantidad_recargar) + i1 + ".00");
+        switch (typeMsg) {
+            case 1:
+                cantidad.setText(getString(R.string.cantidad_recargar) + i1 + ".00");
+                break;
+            case 2:
+                cantidad.setText(getString(R.string.cantidad_comprar) + i1 + ".00");
+                break;
+            default:
+                break;
+
+        }
         iMonto = i1;
     }
 }
