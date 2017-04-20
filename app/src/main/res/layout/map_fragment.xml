@@ -58,6 +58,7 @@
                 app:elevation="6dp"
                 app:fabSize="normal"
                 android:clickable="true"
+                android:visibility="gone"
                 android:src="@drawable/icon_pago"/>
 
             <ProgressBar

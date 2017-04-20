@@ -3,6 +3,7 @@ package com.neology.parking_neo.fragments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
@@ -26,6 +27,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -34,15 +40,24 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.neology.parking_neo.BottomSheetDataNFC;
-import com.neology.parking_neo.MainActivity;
 import com.neology.parking_neo.R;
 import com.neology.parking_neo.Services.FetchAddressIntentService;
+import com.neology.parking_neo.VolleyApp;
 import com.neology.parking_neo.dialogs.PreciosPicker;
 import com.neology.parking_neo.utils.Constants;
+import com.neology.parking_neo.utils.MapUtils;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * Created by Cesar Segura on 24/02/2017.
@@ -112,6 +127,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
     FloatingActionButton pargarParquiBtn;
 
+    public static String urlRoute = "https://maps.googleapis.com/maps/api/directions/json?origin=";
+    double lat, lon, lat1, lon1, lat2, lon2, lat3, lon3, lat4, lon4, lat5, lon5, lat6, lon6, lat7, lon7, lat8, lon8, lat9, lon9;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -160,7 +178,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void initPagoParqui(View view) {
-        pargarParquiBtn = (FloatingActionButton)view.findViewById(R.id.pagarParquiID);
+        pargarParquiBtn = (FloatingActionButton) view.findViewById(R.id.pagarParquiID);
         pargarParquiBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -171,7 +189,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
     private void initElements(View v) {
         RelativeLayout recargarBtnId = (RelativeLayout) v.findViewById(R.id.recargarBtnID);
-
         recargarBtnId.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -199,8 +216,159 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        // Add a marker in Sydney and move the camera
+        createPointsRandom();
+        createMarquersGasStation();
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                mMap.clear();
+                createMarquersGasStation();
+                createRoute(latLng);
+                pargarParquiBtn.setVisibility(View.VISIBLE);
+            }
+        });
 
+    }
+
+    private void createPointsRandom() {
+        if (lat != 0.0 && lon != 0.0) {
+            String latMark1 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat1 = Double.parseDouble(latMark1 + numeroAleatorio);
+            String lngMark1 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio1 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon1 = Double.parseDouble(lngMark1 + numeroAleatorio1);
+
+
+            String latMark2 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio2 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat2 = Double.parseDouble(latMark2 + numeroAleatorio2);
+            String lngMark2 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio3 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon2 = Double.parseDouble(lngMark2 + numeroAleatorio3);
+
+
+            String latMark3 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio4 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat3 = Double.parseDouble(latMark3 + numeroAleatorio4);
+            String lngMark3 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio5 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon3 = Double.parseDouble(lngMark3 + numeroAleatorio5);
+
+            String latMark4 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio6 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat4 = Double.parseDouble(latMark4 + numeroAleatorio6);
+            String lngMark4 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio7 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon4 = Double.parseDouble(lngMark4 + numeroAleatorio7);
+
+            String latMark5 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio8 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat5 = Double.parseDouble(latMark5 + numeroAleatorio8);
+            String lngMark5 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio9 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon5 = Double.parseDouble(lngMark5 + numeroAleatorio9);
+
+            String latMark6 = String.valueOf(lat).substring(0, 5);
+            String numeroAleatorio10 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lat6 = Double.parseDouble(latMark6 + numeroAleatorio10);
+            String lngMark6 = String.valueOf(lon).substring(0, 6);
+            String numeroAleatorio11 = String.valueOf((int) (Math.random() * 2000 + 1));
+            lon6 = Double.parseDouble(lngMark6 + numeroAleatorio11);
+        }
+    }
+
+    private void createMarquersGasStation() {
+        if (lat != 0.0 && lon != 0.0) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat1, lon1))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("ESTACIONAMIENTO 1"));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat2, lon2))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("ESTACIONAMIENTO 2"));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat3, lon3))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("ESTACIONAMIENTO 3"));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat4, lon4))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("GASOLINERA 1"));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat5, lon5))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("GASOLINERA 2"));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat6, lon6))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
+                    .title("GASOLINERA 3"));
+        }
+    }
+
+    private void createRoute(LatLng latLng) {
+        makeJson(latLng.latitude, latLng.longitude);
+    }
+
+    private void makeJson(double latDes, double lngDes) {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET,
+                getRequestUrl(lat, lon, latDes, lngDes),
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d(TAG, response.toString());
+                        parseJsonResponse(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+                Toast.makeText(getContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+        );
+        // Adding request to request queue
+        VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
+
+    }
+
+    public static String getRequestUrl(double latOri, double lngOri, double latDes, double lngDes) {
+        return urlRoute + latOri + "," + lngOri + "&destination=" + latDes + "," + lngDes;
+    }
+
+    private void parseJsonResponse(JSONObject response) {
+        if (response == null || response.length() == 0) {
+            return;
+        }
+        try {
+            if (response.has("status")) {
+                String status = response.getString("status");
+                if (status.equals("OK")) {
+                    JSONArray jsonArray = response.getJSONArray("routes");
+                    JSONObject jsonObject = jsonArray.getJSONObject(0);
+                    JSONObject overview_polyline = jsonObject.getJSONObject("overview_polyline");
+                    String points = overview_polyline.getString("points");
+                    List<LatLng> listaCoordenadasRuta = MapUtils.decode(points);
+                    PolylineOptions polylineOptions = new PolylineOptions();
+                    polylineOptions.color(Color.argb(150, 0, 181, 247)).width(25);
+                    for (LatLng latLng : listaCoordenadasRuta) {
+                        polylineOptions.add(latLng);
+                    }
+                    mMap.addPolyline(polylineOptions);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -339,7 +507,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 Manifest.permission.ACCESS_FINE_LOCATION);
 
         //If permission is granted returning true
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED){
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
             // Gets the best and most recent location currently available, which may be null
             // in rare cases when a location is not available.
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -506,6 +674,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void configCamera() {
+        lat = mLastLocation.getLatitude();
+        lon = mLastLocation.getLongitude();
         CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 16, 20, 40);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
         mMap.moveCamera(cameraUpdate);
