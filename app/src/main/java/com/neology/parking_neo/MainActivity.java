@@ -1,7 +1,7 @@
 package com.neology.parking_neo;
 
-import android.app.Fragment;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
@@ -9,7 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -17,16 +17,18 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.neology.parking_neo.adapters.MovimientosAdapter;
 import com.neology.parking_neo.adapters.ViewPagerAdapter;
 import com.neology.parking_neo.fragments.MapFragment;
 import com.neology.parking_neo.fragments.PagoFragment;
+import com.neology.parking_neo.model.Movimientos;
 import com.neology.parking_neo.util_vending.IabHelper;
 import com.neology.parking_neo.util_vending.IabResult;
 import com.neology.parking_neo.util_vending.Inventory;
 import com.neology.parking_neo.util_vending.Purchase;
 import com.neology.parking_neo.utils.Constants;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -67,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         setupViewPager(viewPager);
         tabLayout.setupWithViewPager(viewPager);
         setupTabIcon();
+        getDataTarjeta();
     }
 
     private void setupTabIcon() {
@@ -268,9 +271,80 @@ public class MainActivity extends AppCompatActivity {
         try {
             JSONObject jsonObject1 = jsonObject.getJSONObject("object");
             montoActualizado = jsonObject1.getInt("iSaldo");
-            MapFragment.saldoTxt.setText("$"+montoActualizado+".00");
+            MapFragment.saldoTxt.setText("$" + montoActualizado + ".00");
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void getDataTarjeta() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET,
+                Constants.TARJETA_URL + "RFID-001",
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("Datos tarjeta", response.toString());
+                        new readTarjetaJson().execute(response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.e("Tarjeta", error.toString());
+//                        getString(R.string.errorHost)+" "+sharedPreferences.getString(Constants_Settings.KEY_URL, null)
+                        Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                return super.getParams();
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                //return Auth();
+                return super.getHeaders();
+            }
+        };
+        VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
+    }
+
+    class readTarjetaJson extends AsyncTask<JSONObject, Void, Boolean> {
+        boolean respuesta = false;
+        int saldoRegistrado= 0;
+        @Override
+        protected Boolean doInBackground(JSONObject... jsonObjects) {
+            JSONObject jsonObject = jsonObjects[0];
+            try {
+                int code = jsonObject.getInt("code");
+                switch (code) {
+                    case 200:
+                        JSONObject jsonObject1 = jsonObject.getJSONObject("parquimetros");
+                        saldoRegistrado = jsonObject1.getInt("iSaldo");
+                        respuesta = true;
+                        break;
+                    case 400:
+                        respuesta = false;
+                        break;
+                    default:
+                        respuesta = false;
+                        break;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return respuesta;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            if(aBoolean) {
+                MapFragment.saldoTxt.setText("$"+saldoRegistrado+".00");
+            }
         }
     }
 
