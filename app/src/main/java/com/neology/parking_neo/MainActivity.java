@@ -29,6 +29,7 @@ import com.neology.parking_neo.adapters.ViewPagerAdapter;
 import com.neology.parking_neo.dialogs.PreciosPicker;
 import com.neology.parking_neo.fragments.MapFragment;
 import com.neology.parking_neo.fragments.PagoFragment;
+import com.neology.parking_neo.rest.Api_Parking;
 import com.neology.parking_neo.util_vending.IabHelper;
 import com.neology.parking_neo.util_vending.IabResult;
 import com.neology.parking_neo.util_vending.Inventory;
@@ -64,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,8 +86,6 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
         setupTabIcon();
         getDataTarjeta();
-
-
     }
 
     private void setupTabIcon() {

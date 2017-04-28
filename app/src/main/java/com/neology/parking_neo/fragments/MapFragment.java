@@ -42,7 +42,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.neology.parking_neo.BottomSheetDataNFC;
@@ -50,14 +53,18 @@ import com.neology.parking_neo.R;
 import com.neology.parking_neo.Services.FetchAddressIntentService;
 import com.neology.parking_neo.VolleyApp;
 import com.neology.parking_neo.dialogs.PreciosPicker;
+import com.neology.parking_neo.interfaces.ParkingAsynResponse;
+import com.neology.parking_neo.interfaces.RouteMapsApiResponse;
+import com.neology.parking_neo.model.Estacionamientos;
+import com.neology.parking_neo.rest.Api_Parking;
+import com.neology.parking_neo.rest.Api_RouteMaps;
 import com.neology.parking_neo.utils.Constants;
-import com.neology.parking_neo.utils.MapUtils;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.List;
+import java.util.ArrayList;
+
+import static com.neology.parking_neo.R.id.map;
 
 /**
  * Created by Cesar Segura on 24/02/2017.
@@ -114,23 +121,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     /**
      * Visible while the address is being fetched.
      */
-    ProgressBar mProgressBar;
+    private ProgressBar mProgressBar;
 
     /**
      * Kicks off the request to fetch an address when pressed.
      */
-    ImageView mFetchAddressButton;
+    private ImageView mFetchAddressButton;
 
-    BottomSheetBehavior mBottomSheetBehavior;
-    View bottomSheet;
+    private BottomSheetBehavior mBottomSheetBehavior;
+    private View bottomSheet;
     public static TextView saldoTxt;
     public static TextView contador;
     public static RelativeLayout cajaContador;
 
-    FloatingActionButton pargarParquiBtn;
+    private FloatingActionButton pargarParquiBtn;
 
-    public static String urlRoute = "https://maps.googleapis.com/maps/api/directions/json?origin=";
-    double lat, lon, lat1, lon1, lat2, lon2, lat3, lon3, lat4, lon4, lat5, lon5, lat6, lon6, lat7, lon7, lat8, lon8, lat9, lon9;
+    private Marker [] markersParking;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -142,7 +148,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         mAddressOutput = "";
 
         buildGoogleApiClient();
-
     }
 
     @Nullable
@@ -202,32 +207,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         });
     }
 
-    public void changeText(int saldoActual) {
-        //this textview should be bound in the fragment onCreate as a member variable
-        TextView frv = (TextView) getView().findViewById(R.id.saldoID);
-        frv.setText("raton" + saldoActual);
-    }
-
     void showDialog(int tipoMovimiento) {
         // Create the fragment and show it as a dialog.
         DialogFragment newFragment = PreciosPicker.newInstance(tipoMovimiento);
         newFragment.show(getFragmentManager(), "dialog");
     }
 
-    public void recargarDemo(View v) {
-        Log.d("BOTTOM", "presionado");
-    }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        createPointsRandom();
-        createMarquersGasStation();
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
                 mMap.clear();
-                createMarquersGasStation();
                 createRoute(latLng);
                 pargarParquiBtn.setVisibility(View.VISIBLE);
             }
@@ -235,102 +227,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
     }
 
-    private void createPointsRandom() {
-        if (lat != 0.0 && lon != 0.0) {
-            String latMark1 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat1 = Double.parseDouble(latMark1 + numeroAleatorio);
-            String lngMark1 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio1 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon1 = Double.parseDouble(lngMark1 + numeroAleatorio1);
-
-
-            String latMark2 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio2 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat2 = Double.parseDouble(latMark2 + numeroAleatorio2);
-            String lngMark2 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio3 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon2 = Double.parseDouble(lngMark2 + numeroAleatorio3);
-
-
-            String latMark3 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio4 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat3 = Double.parseDouble(latMark3 + numeroAleatorio4);
-            String lngMark3 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio5 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon3 = Double.parseDouble(lngMark3 + numeroAleatorio5);
-
-            String latMark4 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio6 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat4 = Double.parseDouble(latMark4 + numeroAleatorio6);
-            String lngMark4 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio7 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon4 = Double.parseDouble(lngMark4 + numeroAleatorio7);
-
-            String latMark5 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio8 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat5 = Double.parseDouble(latMark5 + numeroAleatorio8);
-            String lngMark5 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio9 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon5 = Double.parseDouble(lngMark5 + numeroAleatorio9);
-
-            String latMark6 = String.valueOf(lat).substring(0, 5);
-            String numeroAleatorio10 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lat6 = Double.parseDouble(latMark6 + numeroAleatorio10);
-            String lngMark6 = String.valueOf(lon).substring(0, 6);
-            String numeroAleatorio11 = String.valueOf((int) (Math.random() * 2000 + 1));
-            lon6 = Double.parseDouble(lngMark6 + numeroAleatorio11);
-        }
-    }
-
-    private void createMarquersGasStation() {
-        if (lat != 0.0 && lon != 0.0) {
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat1, lon1))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("ESTACIONAMIENTO 1"));
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat2, lon2))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("ESTACIONAMIENTO 2"));
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat3, lon3))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("ESTACIONAMIENTO 3"));
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat4, lon4))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("GASOLINERA 1"));
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat5, lon5))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("GASOLINERA 2"));
-
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(lat6, lon6))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.icon_park))
-                    .title("GASOLINERA 3"));
-        }
-    }
-
     private void createRoute(LatLng latLng) {
-        makeJson(latLng.latitude, latLng.longitude);
-    }
-
-    private void makeJson(double latDes, double lngDes) {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
-                getRequestUrl(lat, lon, latDes, lngDes),
+                Constants.getRequestUrl(
+                        new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()),
+                        latLng),
                 null,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d(TAG, response.toString());
-                        parseJsonResponse(response);
+                        new Api_RouteMaps(new RouteMapsApiResponse() {
+                            @Override
+                            public void processFinish(Boolean output, PolylineOptions polylineOptions) {
+                                if (output) {
+                                    mMap.addPolyline(polylineOptions);
+                                }
+                            }
+                        }).execute(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
@@ -339,41 +254,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 Toast.makeText(getContext(),
                         error.getMessage(), Toast.LENGTH_SHORT).show();
             }
-        }
-        );
+        });
         // Adding request to request queue
         VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
-
-    }
-
-    public static String getRequestUrl(double latOri, double lngOri, double latDes, double lngDes) {
-        return urlRoute + latOri + "," + lngOri + "&destination=" + latDes + "," + lngDes;
-    }
-
-    private void parseJsonResponse(JSONObject response) {
-        if (response == null || response.length() == 0) {
-            return;
-        }
-        try {
-            if (response.has("status")) {
-                String status = response.getString("status");
-                if (status.equals("OK")) {
-                    JSONArray jsonArray = response.getJSONArray("routes");
-                    JSONObject jsonObject = jsonArray.getJSONObject(0);
-                    JSONObject overview_polyline = jsonObject.getJSONObject("overview_polyline");
-                    String points = overview_polyline.getString("points");
-                    List<LatLng> listaCoordenadasRuta = MapUtils.decode(points);
-                    PolylineOptions polylineOptions = new PolylineOptions();
-                    polylineOptions.color(Color.argb(150, 0, 181, 247)).width(25);
-                    for (LatLng latLng : listaCoordenadasRuta) {
-                        polylineOptions.add(latLng);
-                    }
-                    mMap.addPolyline(polylineOptions);
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -669,6 +552,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
             if (resultCode == Constants.SUCCESS_RESULT) {
                 showToast(getString(R.string.address_found));
                 configCamera();
+                callApiParking();
+                drasCircle();
 
             }
 
@@ -678,13 +563,54 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         }
     }
 
+    private void drasCircle() {
+        mMap.addCircle(new CircleOptions()
+                .center(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                .radius(2000)
+                .strokeColor(ContextCompat.getColor(getContext(), R.color.colorPrimary))
+                .fillColor(ContextCompat.getColor(getContext(), R.color.circle)));
+    }
+
     private void configCamera() {
-        lat = mLastLocation.getLatitude();
-        lon = mLastLocation.getLongitude();
         CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 16, 20, 40);
         CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
         mMap.moveCamera(cameraUpdate);
         mMap.getUiSettings().setMapToolbarEnabled(true);
         mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Marker"));
+    }
+
+    private void callApiParking() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET,
+                Constants.URL_API1 + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude() + Constants.URL_API2,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        new Api_Parking(new ParkingAsynResponse() {
+                            @Override
+                            public void processFinish(Boolean output, ArrayList<Estacionamientos> estacionamientosArrayList) {
+                                if (output) {
+                                    markersParking = new Marker[estacionamientosArrayList.size()];
+                                    for (int i = 0; i < markersParking.length; i++) {
+                                        markersParking[i] = mMap.addMarker(new MarkerOptions()
+                                                .position(estacionamientosArrayList.get(i).getUbicacion())
+                                                .title(estacionamientosArrayList.get(i).getNombre())
+                                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_parking)));
+                                    }
+                                    Log.d("Estacionamiento", estacionamientosArrayList.get(0).getNombre());
+                                }
+                            }
+                        }).execute(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+                Toast.makeText(getContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        // Adding request to request queue
+        VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
     }
 }
