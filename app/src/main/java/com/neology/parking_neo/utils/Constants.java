@@ -42,4 +42,12 @@ public class Constants {
     public static String getRequestUrl(LatLng latLngOri, LatLng latLngDes) {
         return Constants.urlRoute + latLngOri.latitude + "," + latLngOri.longitude + "&destination=" + latLngDes.latitude + "," + latLngDes.longitude;
     }
+    public static String URL_MAPA_STATICO (LatLng origen, LatLng destino) {
+        return "https://maps.googleapis.com/maps/api/staticmap?" +
+                "size=800x500&markers=color:green%7Clabel:A%7C"+
+                origen.latitude+","+origen.longitude+
+                "&markers=color:red%7Clabel:B%7C"+
+                destino.latitude+","+destino.longitude+
+                "&path=weight:4%7Ccolor:0x0000ff%7Cenc:eotuB|pn|QoNYpAyDnDuKjBiGtAyF|@gEJqAf@cI\\aFDQRo@f@cA^c@vEeDx@?T??ZGdBV?fOXGfDaACmLS";
+    }
 }

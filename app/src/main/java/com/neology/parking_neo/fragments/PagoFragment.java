@@ -1,15 +1,13 @@
 package com.neology.parking_neo.fragments;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,35 +17,28 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.datetimepicker.date.DatePickerDialog;
-import com.android.datetimepicker.time.RadialPickerLayout;
-import com.android.datetimepicker.time.TimePickerDialog;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.neology.parking_neo.MainActivity;
+import com.google.android.gms.maps.model.LatLng;
 import com.neology.parking_neo.R;
-import com.neology.parking_neo.Services.AlarmReceiver;
 import com.neology.parking_neo.VolleyApp;
 import com.neology.parking_neo.adapters.MovimientosAdapter;
 import com.neology.parking_neo.model.Movimientos;
-import com.neology.parking_neo.util_vending.IabHelper;
-import com.neology.parking_neo.util_vending.IabResult;
-import com.neology.parking_neo.util_vending.Inventory;
-import com.neology.parking_neo.util_vending.Purchase;
 import com.neology.parking_neo.utils.Constants;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -72,11 +63,31 @@ public class PagoFragment extends Fragment {
     MovimientosAdapter movimientosAdapter;
     ArrayList<Movimientos> movimientosArrayList;
     Movimientos movimientos;
+    Bitmap mapa;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getMovimientos();
+        getStaticMap();
+    }
+
+    private void getStaticMap() {
+        ImageRequest imageRequest = new ImageRequest(
+                Constants.URL_MAPA_STATICO(new LatLng(19.4429338,-99.2056579), new LatLng(19.4406926,-99.2068888)),
+                new Response.Listener<Bitmap>() {
+                    @Override
+                    public void onResponse(Bitmap bitmap) {
+                        Log.d("MAPA", Constants.URL_MAPA_STATICO(new LatLng(19.4429338,-99.2056579), new LatLng(19.4406926,-99.2068888)));
+                        mapa = bitmap;
+                    }
+                }, 0, 0, null, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+            }
+        });
+        VolleyApp.getmInstance().addToRequestQueue(imageRequest);
     }
 
     @Nullable
@@ -134,6 +145,18 @@ public class PagoFragment extends Fragment {
 
     class readMovimientosJson extends AsyncTask<JSONObject, Void, ArrayList<Movimientos>> {
 
+        byte[] byteArray;
+        String imageEncoded;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            mapa.compress(Bitmap.CompressFormat.PNG, 100, stream);
+            byteArray = stream.toByteArray();
+            imageEncoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        }
+
         @Override
         protected ArrayList<Movimientos> doInBackground(JSONObject... jsonObjects) {
             JSONObject jsonObject = jsonObjects[0];
@@ -143,14 +166,15 @@ public class PagoFragment extends Fragment {
                     case 200:
                         movimientosArrayList = new ArrayList<Movimientos>();
                         JSONArray array = jsonObject.getJSONArray("list");
-                        for (int i = 0; i<array.length(); i++) {
+                        for (int i = 0; i < array.length(); i++) {
                             JSONObject jsonObject1 = array.getJSONObject(i);
                             JSONObject jsonObject2 = jsonObject1.getJSONObject("tipoMovimientos");
                             movimientos = new Movimientos(
                                     jsonObject1.getString("strTarjetaID"),
                                     jsonObject1.getLong("dFechaMovimiento"),
                                     jsonObject1.getInt("iMonto"),
-                                    jsonObject2.getString("description"));
+                                    jsonObject2.getString("description"),
+                                    imageEncoded.getBytes());
                             movimientosArrayList.add(movimientos);
                         }
                         break;
@@ -168,7 +192,7 @@ public class PagoFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<Movimientos> list) {
             super.onPostExecute(list);
-            if(list!=null) {
+            if (list != null) {
                 movimientosAdapter = new MovimientosAdapter(list, getActivity());
                 movimientosAdapter.notifyDataSetChanged();
                 mRecyclerView.setAdapter(movimientosAdapter);

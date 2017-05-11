@@ -3,7 +3,7 @@ package com.neology.parking_neo.fragments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
+import android.content.res.Resources;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
@@ -42,9 +42,9 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -64,8 +64,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import static com.neology.parking_neo.R.id.map;
-
 /**
  * Created by Cesar Segura on 24/02/2017.
  */
@@ -75,24 +73,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         GoogleApiClient.OnConnectionFailedListener {
 
 
-    private static final int LOCATION_PERMISSION_CODE = 123;
-    private GoogleMap mMap;
-
     protected static final String TAG = "main-activity";
-
     protected static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
     protected static final String LOCATION_ADDRESS_KEY = "location-address";
-
+    private static final int LOCATION_PERMISSION_CODE = 123;
+    public static TextView saldoTxt;
+    public static TextView contador;
+    public static RelativeLayout cajaContador;
     /**
      * Provides the entry point to Google Play services.
      */
     protected GoogleApiClient mGoogleApiClient;
-
     /**
      * Represents a geographical location.
      */
     protected Location mLastLocation;
-
     /**
      * Tracks whether the user has requested an address. Becomes true when the user requests an
      * address and false when the address (or an error message) is delivered.
@@ -102,41 +97,51 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
      * GoogleApiClient connects.
      */
     protected boolean mAddressRequested;
-
     /**
      * The formatted location address.
      */
     protected String mAddressOutput;
-
-    /**
-     * Receiver registered with this activity to get the response from FetchAddressIntentService.
-     */
-    private AddressResultReceiver mResultReceiver;
-
     /**
      * Displays the location address.
      */
     protected TextView mLocationAddressTextView;
-
+    private GoogleMap mMap;
+    /**
+     * Receiver registered with this activity to get the response from FetchAddressIntentService.
+     */
+    private AddressResultReceiver mResultReceiver;
     /**
      * Visible while the address is being fetched.
      */
     private ProgressBar mProgressBar;
-
     /**
      * Kicks off the request to fetch an address when pressed.
      */
     private ImageView mFetchAddressButton;
-
+    /**
+     * Runs when user clicks the Fetch Address button. Starts the service to fetch the address if
+     * GoogleApiClient is connected.
+     */
+    View.OnClickListener fetchAddressButtonHandler1 = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            // We only start the service to fetch the address if GoogleApiClient is connected.
+            if (mGoogleApiClient.isConnected() && mLastLocation != null) {
+                startIntentService();
+            }
+            // If GoogleApiClient isn't connected, we process the user's request by setting
+            // mAddressRequested to true. Later, when GoogleApiClient connects, we launch the service to
+            // fetch the address. As far as the user is concerned, pressing the Fetch Address button
+            // immediately kicks off the process of getting the address.
+            mAddressRequested = true;
+            updateUIWidgets();
+        }
+    };
     private BottomSheetBehavior mBottomSheetBehavior;
     private View bottomSheet;
-    public static TextView saldoTxt;
-    public static TextView contador;
-    public static RelativeLayout cajaContador;
-
     private FloatingActionButton pargarParquiBtn;
-
     private Marker [] markersParking;
+    private ArrayList<Estacionamientos> estacionamientosArrayList;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -216,10 +221,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(getContext(), R.raw.style_map));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
                 mMap.clear();
+                drawCircle(2000);
+                createMapMarkers(estacionamientosArrayList);
                 createRoute(latLng);
                 pargarParquiBtn.setVisibility(View.VISIBLE);
             }
@@ -228,6 +247,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void createRoute(LatLng latLng) {
+        final String url_route = Constants.getRequestUrl(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), latLng);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
                 Constants.getRequestUrl(
@@ -237,6 +257,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
+                        Log.d(TAG, url_route);
                         Log.d(TAG, response.toString());
                         new Api_RouteMaps(new RouteMapsApiResponse() {
                             @Override
@@ -287,27 +308,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 .addApi(LocationServices.API)
                 .build();
     }
-
-    /**
-     * Runs when user clicks the Fetch Address button. Starts the service to fetch the address if
-     * GoogleApiClient is connected.
-     */
-    View.OnClickListener fetchAddressButtonHandler1 = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            // We only start the service to fetch the address if GoogleApiClient is connected.
-            if (mGoogleApiClient.isConnected() && mLastLocation != null) {
-                startIntentService();
-            }
-            // If GoogleApiClient isn't connected, we process the user's request by setting
-            // mAddressRequested to true. Later, when GoogleApiClient connects, we launch the service to
-            // fetch the address. As far as the user is concerned, pressing the Fetch Address button
-            // immediately kicks off the process of getting the address.
-            mAddressRequested = true;
-            updateUIWidgets();
-        }
-    };
-
 
     @Override
     public void onStart() {
@@ -530,6 +530,63 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         super.onSaveInstanceState(savedInstanceState);
     }
 
+    private void configCamera() {
+        CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 16, 20, 40);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
+        mMap.moveCamera(cameraUpdate);
+        mMap.getUiSettings().setMapToolbarEnabled(true);
+        mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Marker"));
+    }
+
+    private void callApiParking() {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET,
+                Constants.URL_API1 + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude() + Constants.URL_API2,
+                null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        new Api_Parking(new ParkingAsynResponse() {
+                            @Override
+                            public void processFinish(Boolean output, ArrayList<Estacionamientos> mEstacionamientosArrayList) {
+                                if (output) {
+                                    estacionamientosArrayList = mEstacionamientosArrayList;
+                                    createMapMarkers(estacionamientosArrayList);
+                                }
+                            }
+                        }).execute(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+                Toast.makeText(getContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        // Adding request to request queue
+        VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
+    }
+
+    private void drawCircle(int radius) {
+        mMap.addCircle(new CircleOptions()
+                .center(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                .radius(radius)
+                .strokeColor(ContextCompat.getColor(getContext(), R.color.colorPrimary))
+                .fillColor(ContextCompat.getColor(getContext(), R.color.circle)));
+    }
+
+    private void createMapMarkers(ArrayList<Estacionamientos> estacionamientosArrayList) {
+        if(estacionamientosArrayList.size() > 0) {
+            markersParking = new Marker[estacionamientosArrayList.size()];
+            for (int i = 0; i < markersParking.length; i++) {
+                markersParking[i] = mMap.addMarker(new MarkerOptions()
+                        .position(estacionamientosArrayList.get(i).getUbicacion())
+                        .title(estacionamientosArrayList.get(i).getNombre())
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_parking)));
+            }
+        }
+    }
+
     /**
      * Receiver for data sent from FetchAddressIntentService.
      */
@@ -550,10 +607,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
             // Show a toast message if an address was found.
             if (resultCode == Constants.SUCCESS_RESULT) {
+                mMap.clear();
                 showToast(getString(R.string.address_found));
                 configCamera();
                 callApiParking();
-                drasCircle();
+                drawCircle(2000);
 
             }
 
@@ -561,56 +619,5 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
             mAddressRequested = false;
             updateUIWidgets();
         }
-    }
-
-    private void drasCircle() {
-        mMap.addCircle(new CircleOptions()
-                .center(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
-                .radius(2000)
-                .strokeColor(ContextCompat.getColor(getContext(), R.color.colorPrimary))
-                .fillColor(ContextCompat.getColor(getContext(), R.color.circle)));
-    }
-
-    private void configCamera() {
-        CameraPosition cameraPosition = new CameraPosition(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 16, 20, 40);
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
-        mMap.moveCamera(cameraUpdate);
-        mMap.getUiSettings().setMapToolbarEnabled(true);
-        mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Marker"));
-    }
-
-    private void callApiParking() {
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.GET,
-                Constants.URL_API1 + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude() + Constants.URL_API2,
-                null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        new Api_Parking(new ParkingAsynResponse() {
-                            @Override
-                            public void processFinish(Boolean output, ArrayList<Estacionamientos> estacionamientosArrayList) {
-                                if (output) {
-                                    markersParking = new Marker[estacionamientosArrayList.size()];
-                                    for (int i = 0; i < markersParking.length; i++) {
-                                        markersParking[i] = mMap.addMarker(new MarkerOptions()
-                                                .position(estacionamientosArrayList.get(i).getUbicacion())
-                                                .title(estacionamientosArrayList.get(i).getNombre())
-                                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_parking)));
-                                    }
-                                    Log.d("Estacionamiento", estacionamientosArrayList.get(0).getNombre());
-                                }
-                            }
-                        }).execute(response);
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.d(TAG, "Error: " + error.getMessage());
-                Toast.makeText(getContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-        // Adding request to request queue
-        VolleyApp.getmInstance().addToRequestQueue(jsonObjectRequest);
     }
 }
