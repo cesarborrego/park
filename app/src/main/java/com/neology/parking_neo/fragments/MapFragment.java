@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -145,6 +146,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     private FloatingActionButton pargarParquiBtn;
     private Marker[] markersParking;
     private ArrayList<Estacionamientos> estacionamientosArrayList;
+    private SeekBar seekBar;
+    private int radius = 100;
     private int REQUEST_ACCESS_LOCATION = 0;
     public static final String[] PERMISSIONS_EXTERNAL_STORAGE = {
             READ_EXTERNAL_STORAGE,
@@ -220,7 +223,32 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
         updateUIWidgets();
         initPagoParqui(v);
+        implementSeekBar(v);
         return v;
+    }
+
+    private void implementSeekBar(View v) {
+        seekBar = (SeekBar) v.findViewById(R.id.seekBarId);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                radius = radius + i;
+                mMap.clear();
+                configCamera();
+                callApiParking(i);
+                drawCircle(i);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 
     private void showBottomSheet() {
@@ -490,10 +518,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Marker"));
     }
 
-    private void callApiParking() {
+    private void callApiParking(int radius) {
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
-                Constants.URL_API1 + mLastLocation.getLatitude() + "," + mLastLocation.getLongitude() + Constants.URL_API2,
+                Constants.URL_API_PARKING(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), radius),
                 null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -562,8 +590,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 mMap.clear();
                 showToast(getString(R.string.address_found));
                 configCamera();
-                callApiParking();
-                drawCircle(2000);
+                callApiParking(radius);
+                drawCircle(radius);
 
             }
 

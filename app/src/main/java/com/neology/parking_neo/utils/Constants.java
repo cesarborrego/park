@@ -35,10 +35,12 @@ public class Constants {
     //private static String SKU = "parki_40";
     public static String SKU = "android.test.purchased";
 
-    public static final String URL_API1 = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
-    public static final String URL_API2 = "&radius=2000&type=parking&key=AIzaSyBs3CoFTpKcE0MmfmQr-sBclvkqK1PKSWw";
-
+    public static String URL_API_PARKING (LatLng ubicacion, int radius){
+        return "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+
+                ubicacion.latitude+","+ubicacion.longitude+"&radius="+radius+"&type=parking&key=AIzaSyBs3CoFTpKcE0MmfmQr-sBclvkqK1PKSWw";
+    }
     public static String urlRoute = "https://maps.googleapis.com/maps/api/directions/json?origin=";
+
     public static String getRequestUrl(LatLng latLngOri, LatLng latLngDes) {
         return Constants.urlRoute + latLngOri.latitude + "," + latLngOri.longitude + "&destination=" + latLngDes.latitude + "," + latLngDes.longitude;
     }
