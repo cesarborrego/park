@@ -28,6 +28,7 @@ import com.neology.parking_neo.R;
 import com.neology.parking_neo.VolleyApp;
 import com.neology.parking_neo.adapters.MovimientosAdapter;
 import com.neology.parking_neo.model.Movimientos;
+import com.neology.parking_neo.utils.CheckInternetConnection;
 import com.neology.parking_neo.utils.Constants;
 
 import org.json.JSONArray;
@@ -68,8 +69,13 @@ public class PagoFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getMovimientos();
-        getStaticMap();
+        if (CheckInternetConnection.isConnectedToInternet(getContext())) {
+            getMovimientos();
+            getStaticMap();
+        } else {
+            Toast.makeText(getContext(), "Conectarse a internet", Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     private void getStaticMap() {

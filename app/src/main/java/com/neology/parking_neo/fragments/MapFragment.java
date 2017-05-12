@@ -1,6 +1,5 @@
 package com.neology.parking_neo.fragments;
 
-import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -13,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -64,6 +62,10 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 /**
  * Created by Cesar Segura on 24/02/2017.
  */
@@ -77,6 +79,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     protected static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
     protected static final String LOCATION_ADDRESS_KEY = "location-address";
     private static final int LOCATION_PERMISSION_CODE = 123;
+    private static final int REQUEST_EXTERNAL_PERMISSION_CODE = 666;
     public static TextView saldoTxt;
     public static TextView contador;
     public static RelativeLayout cajaContador;
@@ -140,8 +143,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     private BottomSheetBehavior mBottomSheetBehavior;
     private View bottomSheet;
     private FloatingActionButton pargarParquiBtn;
-    private Marker [] markersParking;
+    private Marker[] markersParking;
     private ArrayList<Estacionamientos> estacionamientosArrayList;
+    private int REQUEST_ACCESS_LOCATION = 0;
+    public static final String[] PERMISSIONS_EXTERNAL_STORAGE = {
+            READ_EXTERNAL_STORAGE,
+            WRITE_EXTERNAL_STORAGE
+    };
+    public static final String[] PERMISSION_ACCESS_LOCATION = {
+            ACCESS_FINE_LOCATION
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -153,6 +164,39 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         mAddressOutput = "";
 
         buildGoogleApiClient();
+        checkExternalStoragePermission();
+    }
+
+    public boolean checkExternalStoragePermission() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            return true;
+        }
+
+        int readStoragePermissionState = ContextCompat.checkSelfPermission(getActivity(), READ_EXTERNAL_STORAGE);
+        int writeStoragePermissionState = ContextCompat.checkSelfPermission(getActivity(), WRITE_EXTERNAL_STORAGE);
+
+        boolean externalStoragePermissionGranted = readStoragePermissionState == PackageManager.PERMISSION_GRANTED &&
+                writeStoragePermissionState == PackageManager.PERMISSION_GRANTED;
+        if (!externalStoragePermissionGranted) {
+            requestPermissions(PERMISSIONS_EXTERNAL_STORAGE, REQUEST_EXTERNAL_PERMISSION_CODE);
+        }
+
+        return externalStoragePermissionGranted;
+    }
+
+    public boolean checkLocationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            return true;
+        }
+
+        int locationPermissionState = ContextCompat.checkSelfPermission(getActivity(), ACCESS_FINE_LOCATION);
+
+        boolean locationPermissionGranted = locationPermissionState == PackageManager.PERMISSION_GRANTED;
+        if (!locationPermissionGranted) {
+            requestPermissions(PERMISSION_ACCESS_LOCATION, REQUEST_ACCESS_LOCATION);
+        }
+
+        return locationPermissionGranted;
     }
 
     @Nullable
@@ -328,134 +372,42 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
      */
     @Override
     public void onConnected(Bundle connectionHint) {
-
-        if (canAccessLocation()) {
-            if (ContextCompat.checkSelfPermission(getContext(),
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-
-                // Gets the best and most recent location currently available, which may be null
-                // in rare cases when a location is not available.
-                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                if (mLastLocation != null) {
-                    // Determine whether a Geocoder is available.
-                    if (!Geocoder.isPresent()) {
-                        Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    // It is possible that the user presses the button to get the address before the
-                    // GoogleApiClient object successfully connects. In such a case, mAddressRequested
-                    // is set to true, but no attempt is made to fetch the address (see
-                    // fetchAddressButtonHandler()) . Instead, we start the intent service here if the
-                    // user has requested an address, since we now have a connection to GoogleApiClient.
-                    //if (mAddressRequested) {
-                    //  startIntentService();
-                    //}
-                    startIntentService();
-                }
-            }
-            return;
-        }
-
-        //If the app has not the permission then asking for the permission
-        requestLocationPermission();
-        
-        /*
-
-        if (ContextCompat.checkSelfPermission(getContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            // Gets the best and most recent location currently available, which may be null
-            // in rare cases when a location is not available.
+        if (!checkLocationPermission()) {
+            Toast.makeText(getContext(), "Debe permitir el uso de la ubicación para interactuar con el mapa", Toast.LENGTH_SHORT).show();
+        } else {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            if (mLastLocation != null) {
-                // Determine whether a Geocoder is available.
-                if (!Geocoder.isPresent()) {
-                    Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
-                    return;
-                }
-                // It is possible that the user presses the button to get the address before the
-                // GoogleApiClient object successfully connects. In such a case, mAddressRequested
-                // is set to true, but no attempt is made to fetch the address (see
-                // fetchAddressButtonHandler()) . Instead, we start the intent service here if the
-                // user has requested an address, since we now have a connection to GoogleApiClient.
-                //if (mAddressRequested) {
-                //  startIntentService();
-                //}
-                startIntentService();
-            }
-        } */
-    }
-
-    //We are calling this method to check the permission status
-    private boolean canAccessLocation() {
-        //Getting the permission status
-        int permissionCheck = ContextCompat.checkSelfPermission(getContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION);
-
-        //If permission is granted returning true
-        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            // Gets the best and most recent location currently available, which may be null
-            // in rare cases when a location is not available.
-            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            return true;
+            getLocation();
         }
-
-        //If permission is not granted returning false
-        return false;
     }
 
-    //Requesting permission
-    private void requestLocationPermission() {
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)) {
-            //If the user has denied the permission previously your code will come to this block
-            //Here you can explain why you need this permission
-            //Explain here why you need this permission
-            Toast.makeText(getContext(), "Se necesita acceder a la ubicación para el uso correcto del mapa", Toast.LENGTH_SHORT).show();
-        }
-
-        //And finally ask for the permission
-        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_CODE);
-    }
 
     //This method will be called when the user will tap on allow or deny
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
 
-        //Checking the request code of our request
-        if (requestCode == LOCATION_PERMISSION_CODE) {
-
-            //If permission is granted
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                //Displaying a toast
-                Toast.makeText(getContext(), "Permission granted now you can access location", Toast.LENGTH_LONG).show();
-
-                if (mLastLocation != null) {
-                    // Determine whether a Geocoder is available.
-                    if (!Geocoder.isPresent()) {
-                        Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    // It is possible that the user presses the button to get the address before the
-                    // GoogleApiClient object successfully connects. In such a case, mAddressRequested
-                    // is set to true, but no attempt is made to fetch the address (see
-                    // fetchAddressButtonHandler()) . Instead, we start the intent service here if the
-                    // user has requested an address, since we now have a connection to GoogleApiClient.
-                    //if (mAddressRequested) {
-                    //  startIntentService();
-                    //}
-                    startIntentService();
+        switch (requestCode) {
+            case 0:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getContext(), "Urra", Toast.LENGTH_SHORT).show();
+                    getLocation();
+                } else {
+                    Toast.makeText(getContext(), "permission denied, boo!", Toast.LENGTH_SHORT).show();
                 }
-
-            } else {
-                //Displaying another toast if permission is not granted
-                Toast.makeText(getContext(), "Oops you just denied the permission", Toast.LENGTH_LONG).show();
-            }
+                break;
         }
     }
+
+    private void getLocation() {
+        if (mLastLocation != null) {
+            // Determine whether a Geocoder is available.
+            if (!Geocoder.isPresent()) {
+                Toast.makeText(getContext(), R.string.no_geocoder_available, Toast.LENGTH_LONG).show();
+                return;
+            }
+            startIntentService();
+        }
+    }
+
 
     /**
      * Creates an intent, adds location data to it as an extra, and starts the intent service for
@@ -576,7 +528,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
     }
 
     private void createMapMarkers(ArrayList<Estacionamientos> estacionamientosArrayList) {
-        if(estacionamientosArrayList.size() > 0) {
+        if (estacionamientosArrayList.size() > 0) {
             markersParking = new Marker[estacionamientosArrayList.size()];
             for (int i = 0; i < markersParking.length; i++) {
                 markersParking[i] = mMap.addMarker(new MarkerOptions()
