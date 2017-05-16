@@ -30,7 +30,7 @@ public class Detalle_Activity extends AppCompatActivity {
 
     private void initElements() {
         mapaImg = (ImageView) findViewById(R.id.image_paralax);
-        ImageUtil.setImg(movimientos.getMapa(), mapaImg);
+        //ImageUtil.setImg(movimientos.getMapa(), mapaImg);
         idTarjeta = (TextView) findViewById(R.id.tituloPromo1);
         idTarjeta.setText(movimientos.getStrTarjetaID());
         numMovimiento = (TextView) findViewById(R.id.descripcion1);

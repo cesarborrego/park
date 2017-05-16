@@ -12,18 +12,30 @@ public class Movimientos implements Parcelable {
     private long date;
     private int monto;
     private String strTipoMovimiento;
-    private byte[] mapa;
+    private String ruta;
+    private double latDest;
+    private double lngDest;
+    private double latOri;
+    private double lngOri;
 
-    public Movimientos (String strTarjetaID,
-                        long date,
-                        int monto,
-                        String strTipoMovimiento,
-                        byte [] mapa) {
+    public Movimientos(String strTarjetaID,
+                       long date,
+                       int monto,
+                       String strTipoMovimiento,
+                       String ruta,
+                       double latDes,
+                       double lngDes,
+                       double latOri,
+                       double lngOri) {
         this.setStrTarjetaID(strTarjetaID);
         this.setDate(date);
         this.setMonto(monto);
         this.setStrTipoMovimiento(strTipoMovimiento);
-        this.setMapa(mapa);
+        this.setRuta(ruta);
+        this.setLatDest(latDes);
+        this.setLngDest(lngDes);
+        this.setLatOri(latOri);
+        this.setLngOri(lngOri);
     }
 
 
@@ -32,7 +44,11 @@ public class Movimientos implements Parcelable {
         setDate(in.readLong());
         setMonto(in.readInt());
         setStrTipoMovimiento(in.readString());
-        setMapa(in.createByteArray());
+        setRuta(in.readString());
+        setLatDest(in.readDouble());
+        setLngDest(in.readDouble());
+        setLatOri(in.readDouble());
+        setLngOri(in.readDouble());
     }
 
     public static final Creator<Movimientos> CREATOR = new Creator<Movimientos>() {
@@ -58,7 +74,11 @@ public class Movimientos implements Parcelable {
         parcel.writeLong(getDate());
         parcel.writeInt(getMonto());
         parcel.writeString(getStrTipoMovimiento());
-        parcel.writeByteArray(getMapa());
+        parcel.writeString(getRuta());
+        parcel.writeDouble(getLatDest());
+        parcel.writeDouble(getLngDest());
+        parcel.writeDouble(getLatOri());
+        parcel.writeDouble(getLngOri());
     }
 
     public String getStrTarjetaID() {
@@ -93,11 +113,43 @@ public class Movimientos implements Parcelable {
         this.strTipoMovimiento = strTipoMovimiento;
     }
 
-    public byte[] getMapa() {
-        return mapa;
+    public String getRuta() {
+        return ruta;
     }
 
-    public void setMapa(byte[] mapa) {
-        this.mapa = mapa;
+    public void setRuta(String ruta) {
+        this.ruta = ruta;
+    }
+
+    public double getLatDest() {
+        return latDest;
+    }
+
+    public void setLatDest(double latDest) {
+        this.latDest = latDest;
+    }
+
+    public double getLngDest() {
+        return lngDest;
+    }
+
+    public void setLngDest(double lngDest) {
+        this.lngDest = lngDest;
+    }
+
+    public double getLatOri() {
+        return latOri;
+    }
+
+    public void setLatOri(double latOri) {
+        this.latOri = latOri;
+    }
+
+    public double getLngOri() {
+        return lngOri;
+    }
+
+    public void setLngOri(double lngOri) {
+        this.lngOri = lngOri;
     }
 }

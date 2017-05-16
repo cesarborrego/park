@@ -9,5 +9,5 @@ import java.util.ArrayList;
  */
 
 public interface RouteMapsApiResponse {
-    void processFinish(Boolean output, PolylineOptions polylineOptions);
+    void processFinish(Boolean output, PolylineOptions polylineOptions, String ruta);
 }

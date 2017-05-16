@@ -224,6 +224,11 @@ public class MainActivity extends AppCompatActivity {
             js.put("dFechaMovimiento", millis);
             js.put("iMonto", iMonto);
             js.put("tipoMovimiento", tipoMovimiento);
+            js.put("strRuta", MapFragment.ruta);
+            js.put("dLat", MapFragment.destino.latitude);
+            js.put("dLng", MapFragment.destino.longitude);
+            js.put("oLat", MapFragment.origen.latitude);
+            js.put("oLng", MapFragment.origen.longitude);
         } catch (JSONException e) {
             e.printStackTrace();
         }

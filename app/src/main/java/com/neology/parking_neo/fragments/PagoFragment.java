@@ -48,53 +48,22 @@ import java.util.Map;
 
 public class PagoFragment extends Fragment {
 
-    private static final String TIME_PATTERN = "HH:mm";
-
-    private TextView lblDate;
-    private TextView lblTime;
-    private Button datePickerBtn;
-    private LinearLayout timePickerBtn, comprarBtn;
-    private Button cancelarAlarmaBtn;
-    private Calendar calendar;
-    private DateFormat dateFormat;
-    private SimpleDateFormat timeFormat;
-
-
     private RecyclerView mRecyclerView;
     MovimientosAdapter movimientosAdapter;
     ArrayList<Movimientos> movimientosArrayList;
     Movimientos movimientos;
-    Bitmap mapa;
+    private String imageEncoded;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (CheckInternetConnection.isConnectedToInternet(getContext())) {
             getMovimientos();
-            getStaticMap();
         } else {
             Toast.makeText(getContext(), "Conectarse a internet", Toast.LENGTH_SHORT).show();
         }
-
     }
 
-    private void getStaticMap() {
-        ImageRequest imageRequest = new ImageRequest(
-                Constants.URL_MAPA_STATICO(new LatLng(19.4429338,-99.2056579), new LatLng(19.4406926,-99.2068888)),
-                new Response.Listener<Bitmap>() {
-                    @Override
-                    public void onResponse(Bitmap bitmap) {
-                        Log.d("MAPA", Constants.URL_MAPA_STATICO(new LatLng(19.4429338,-99.2056579), new LatLng(19.4406926,-99.2068888)));
-                        mapa = bitmap;
-                    }
-                }, 0, 0, null, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-
-            }
-        });
-        VolleyApp.getmInstance().addToRequestQueue(imageRequest);
-    }
 
     @Nullable
     @Override
@@ -151,18 +120,6 @@ public class PagoFragment extends Fragment {
 
     class readMovimientosJson extends AsyncTask<JSONObject, Void, ArrayList<Movimientos>> {
 
-        byte[] byteArray;
-        String imageEncoded;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            mapa.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            byteArray = stream.toByteArray();
-            imageEncoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-        }
-
         @Override
         protected ArrayList<Movimientos> doInBackground(JSONObject... jsonObjects) {
             JSONObject jsonObject = jsonObjects[0];
@@ -180,7 +137,11 @@ public class PagoFragment extends Fragment {
                                     jsonObject1.getLong("dFechaMovimiento"),
                                     jsonObject1.getInt("iMonto"),
                                     jsonObject2.getString("description"),
-                                    imageEncoded.getBytes());
+                                    jsonObject1.getString("strRuta"),
+                                    jsonObject1.getDouble("dLat"),
+                                    jsonObject1.getDouble("dLng"),
+                                    jsonObject1.getDouble("oLat"),
+                                    jsonObject1.getDouble("oLng"));
                             movimientosArrayList.add(movimientos);
                         }
                         break;

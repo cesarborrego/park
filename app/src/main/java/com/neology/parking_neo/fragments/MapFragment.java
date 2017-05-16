@@ -157,6 +157,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
             ACCESS_FINE_LOCATION
     };
 
+    public static String ruta;
+    public static LatLng origen;
+    public static LatLng destino;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -232,7 +235,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                radius = radius + i;
+                radius = i;
                 mMap.clear();
                 configCamera();
                 callApiParking(i);
@@ -309,7 +312,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
             @Override
             public void onMapLongClick(LatLng latLng) {
                 mMap.clear();
-                drawCircle(2000);
+                createMainMarker();
+                drawCircle(radius);
                 createMapMarkers(estacionamientosArrayList);
                 createRoute(latLng);
                 pargarParquiBtn.setVisibility(View.VISIBLE);
@@ -318,7 +322,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
 
     }
 
-    private void createRoute(LatLng latLng) {
+    private void createMainMarker() {
+        mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()))
+                .title("Marker")
+                .snippet("¡Aquí estás tú!"));
+    }
+
+    private void createRoute(final LatLng latLng) {
         final String url_route = Constants.getRequestUrl(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()), latLng);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.GET,
@@ -333,9 +344,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                         Log.d(TAG, response.toString());
                         new Api_RouteMaps(new RouteMapsApiResponse() {
                             @Override
-                            public void processFinish(Boolean output, PolylineOptions polylineOptions) {
+                            public void processFinish(Boolean output, PolylineOptions polylineOptions, String ruta) {
                                 if (output) {
                                     mMap.addPolyline(polylineOptions);
+                                    MapFragment.ruta = ruta;
+                                    MapFragment.origen = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                                    MapFragment.destino = latLng;
                                 }
                             }
                         }).execute(response);
@@ -515,7 +529,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
         CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(cameraPosition);
         mMap.moveCamera(cameraUpdate);
         mMap.getUiSettings().setMapToolbarEnabled(true);
-        mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Marker"));
+        createMainMarker();
     }
 
     private void callApiParking(int radius) {
@@ -562,6 +576,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback,
                 markersParking[i] = mMap.addMarker(new MarkerOptions()
                         .position(estacionamientosArrayList.get(i).getUbicacion())
                         .title(estacionamientosArrayList.get(i).getNombre())
+                        .snippet(estacionamientosArrayList.get(i).getDireccion())
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_parking)));
             }
         }

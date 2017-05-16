@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.neology.parking_neo.fragments.MapFragment;
 import com.neology.parking_neo.interfaces.RouteMapsApiResponse;
 import com.neology.parking_neo.utils.MapUtils;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class Api_RouteMaps extends AsyncTask<JSONObject, Void, PolylineOptions> {
     private PolylineOptions polylineOptions;
     private RouteMapsApiResponse routeMapsApiResponse;
+    String points;
 
     public Api_RouteMaps(RouteMapsApiResponse routeMapsApiResponse) {
         this.routeMapsApiResponse = routeMapsApiResponse;
@@ -35,7 +37,7 @@ public class Api_RouteMaps extends AsyncTask<JSONObject, Void, PolylineOptions> 
                     JSONArray jsonArray = response[0].getJSONArray("routes");
                     JSONObject jsonObject = jsonArray.getJSONObject(0);
                     JSONObject overview_polyline = jsonObject.getJSONObject("overview_polyline");
-                    String points = overview_polyline.getString("points");
+                    points = overview_polyline.getString("points");
                     List<LatLng> listaCoordenadasRuta = MapUtils.decode(points);
                     polylineOptions = new PolylineOptions();
                     polylineOptions.color(Color.argb(150, 0, 181, 247)).width(25);
@@ -54,9 +56,9 @@ public class Api_RouteMaps extends AsyncTask<JSONObject, Void, PolylineOptions> 
     protected void onPostExecute(PolylineOptions polylineOptions) {
         super.onPostExecute(polylineOptions);
         if (polylineOptions != null) {
-            routeMapsApiResponse.processFinish(true, polylineOptions);
+            routeMapsApiResponse.processFinish(true, polylineOptions, points);
         } else {
-            routeMapsApiResponse.processFinish(false, null);
+            routeMapsApiResponse.processFinish(false, null, null);
         }
     }
 }
